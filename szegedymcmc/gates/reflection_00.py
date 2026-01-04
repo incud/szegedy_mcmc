@@ -23,4 +23,5 @@ class Reflection00(Gate):
         qc.x(qs)
         qc.mcp(np.pi, qs[:-1], qs[-1])           # -1 on |1...1>
         qc.x(qs)                                 # -> -1 on |0...0>
+        qc.global_phase += np.pi
         return qc

@@ -79,3 +79,4 @@ def test_simple_example_rj():
                 f" | x={x:0{n}b}, j={j}, Δ={Delta:+.6f}, A={A:.12f}, p(C=1)={p1:.12f}"
             )
             assert ok_prob and ok_regs
+    
