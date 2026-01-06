@@ -1,1 +1,1 @@
-python3 -m pytest tests/integration/*
+python3 -m pytest tests/gates/* tests/ising/*

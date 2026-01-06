@@ -6,7 +6,7 @@ from qiskit.quantum_info import Statevector, Operator
 from szegedymcmc import IsingModel, MoveAcceptanceF, Reflection00
 
 
-def test_simple_example():
+def test_reflection_simple_example():
 
     example_model = IsingModel.from_list_clauses(
         k=2, d=3, n=4, 
@@ -18,7 +18,7 @@ def test_simple_example():
     U = Operator(R00).data
 
     dim = 2 ** (n + 1)
-    U_expected = np.eye(dim, dtype=complex)
-    U_expected[0, 0] = -1.0                         # flip phase only on |0...0>_(M,C)
+    U_expected = -1 * np.eye(dim, dtype=complex)
+    U_expected[0, 0] = 1.0                         # flip phase only on |0...0>_(M,C)
 
     assert np.allclose(U, U_expected)
