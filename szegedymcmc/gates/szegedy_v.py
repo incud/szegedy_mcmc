@@ -5,8 +5,8 @@ from qiskit.circuit.library import StatePreparation
 from qiskit.quantum_info import Operator
 
 
-def check_row_stochasticity(P, tol=1e-10):
-    if (P < 0).any() or not np.allclose(P.sum(1), 1, atol=tol):
+def check_column_stochasticity(P, tol=1e-10):
+    if (P < 0).any() or not np.allclose(P.T.sum(1), 1, atol=tol):
         raise ValueError("Invalid MC.")
     
 
@@ -29,7 +29,7 @@ def check_reversibility(P, tol=1e-10):
             raise ValueError("Detailed balance fails on a cycle.")
 
 
-class SzegedyW(Gate):
+class SzegedyV(Gate):
     """
     Oracle W (Eq. 2 arXiv:1910.01659):
         W|x>|0> = |w_x>|x>,   |w_x> = sum_y sqrt(P[x,y]) |y|
@@ -48,28 +48,28 @@ class SzegedyW(Gate):
     def _validate(self, P, tol):
         if P.ndim != 2 or P.shape[0] != P.shape[1]:
             raise ValueError("P must be square.")
-        check_row_stochasticity(P, tol)
+        check_column_stochasticity(P, tol)
         check_irreduciblility(P, tol)
         check_reversibility(P, tol)
     
     def _build_definition(self):
-        qc = QuantumCircuit(2 * self.n, name="SzegedyW")
-        A, B = range(self.n), range(self.n, 2 * self.n)
+        qc = QuantumCircuit(2 * self.n, name="SzegedyV")
+        A = list(range(self.n))
+        B = list(range(self.n, 2 * self.n))
 
-        # |x>|0> → |0>|x>
-        for k in range(self.n):
-            qc.swap(A[k], B[k])
-
-        # StatePreparation for each |w_x>
         for x in range(self.d):
-            if not (self.P[x] > self.tol).any():
+            # Check the column, not the row
+            if not (self.P[:, x] > self.tol).any():
                 continue
-            amps = np.zeros(self.dim)
-            amps[:self.d] = np.sqrt(self.P[x])
+
+            amps = np.zeros(self.dim, dtype=float)
+            amps[:self.d] = np.sqrt(self.P[:, x])  # column-stochastic convention
             amps /= np.linalg.norm(amps)
-            qc.append(
-                StatePreparation(amps).control(self.n, ctrl_state=x),
-                list(B) + list(A),
-            )
+
+            prep = StatePreparation(amps)
+            cprep = prep.control(self.n, ctrl_state=x)
+
+            # Controls first (A), targets second (B)
+            qc.append(cprep, A + B)
 
         return qc
